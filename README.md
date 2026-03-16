@@ -247,3 +247,7 @@ Run the tests with:
 ```bash
 ruby -Ilib:test -e 'Dir["test/**/*_test.rb"].sort.each { |file| require File.expand_path(file) }'
 ```
+
+## License
+
+MIT. See `LICENSE`.

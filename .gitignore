@@ -11,6 +11,7 @@ log/
 .byebug_history
 
 .cog/brain.db*
+.cog/index.scip
 .claude/
 .mcp.json
 .opencode/plugins/
