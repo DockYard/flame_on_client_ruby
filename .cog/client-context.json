@@ -1,0 +1,21 @@
+{
+  "version": "0.17.0",
+  "selected_agents": [
+    "opencode"
+  ],
+  "installed_assets": [
+    "AGENTS.md",
+    "opencode.json",
+    ".opencode/plugin/cog-override.ts",
+    ".opencode/plugin/cog-memory.ts",
+    ".opencode/plugin/cog-debug.ts",
+    ".opencode/agents/cog-code-query.md",
+    ".opencode/agents/cog-debug.md",
+    ".opencode/agents/cog-mem.md"
+  ],
+  "features": {
+    "enhanced_memory_writes": true,
+    "rationale_capture_prompts": true,
+    "provenance_envelopes": true
+  }
+}

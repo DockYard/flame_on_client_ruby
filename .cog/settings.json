@@ -1,0 +1,5 @@
+{
+  "memory": {
+    "brain": "file:.cog/brain.db"
+  }
+}
