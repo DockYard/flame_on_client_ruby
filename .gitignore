@@ -1,0 +1,16 @@
+.bundle/
+vendor/bundle/
+pkg/
+coverage/
+tmp/
+log/
+*.log
+*.gem
+
+.DS_Store
+.byebug_history
+
+.cog/brain.db*
+.claude/
+.mcp.json
+.opencode/plugins/
