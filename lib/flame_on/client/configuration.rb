@@ -25,7 +25,11 @@ module FlameOn
                     :service_name,
                     :release,
                     :adapter,
-                    :processor
+                    :processor,
+                    :dedupe_enabled,
+                    :dedupe_window_seconds,
+                    :max_memory_mb,
+                    :memory_check_interval
 
       def initialize
         @capture = false
@@ -49,6 +53,10 @@ module FlameOn
         @release = ENV['FLAME_ON_RELEASE']
         @adapter = Adapters::NullAdapter.new
         @processor = Processors::ProfileProcessor.new
+        @dedupe_enabled = true
+        @dedupe_window_seconds = 60
+        @max_memory_mb = nil
+        @memory_check_interval = 5
       end
 
       def validate!

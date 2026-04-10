@@ -25,8 +25,10 @@ module FlameOn
         end
 
         def call(env)
+          dedupe_id = "#{env['REQUEST_METHOD']} #{env['PATH_INFO']}"
           @client.capture(@event_name, @identifier.call(env), threshold_ms: @threshold_ms,
-                                                              metadata: @metadata.call(env)) do
+                                                              metadata: @metadata.call(env),
+                                                              identifier: dedupe_id) do
             @app.call(env)
           end
         end

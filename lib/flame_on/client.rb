@@ -27,15 +27,21 @@ require_relative 'client/pprof_encoder'
 require_relative 'client/error_encoder'
 require_relative 'client/error_event_builder'
 require_relative 'client/adapters/grpc_adapter'
+require_relative 'client/circuit_breaker'
+require_relative 'client/trace_dedupe'
+require_relative 'client/memory_watcher'
 require_relative 'client/integrations/rack_middleware'
 require_relative 'client/integrations/rails'
 
 module FlameOn
   module Client
     class << self
+      attr_accessor :logger
+
       def configure
         yield(configuration)
         configuration.validate!
+        start_safety_mechanisms
         restart_reporter_if_running
         configuration
       end
@@ -44,13 +50,33 @@ module FlameOn
         @configuration ||= Configuration.new
       end
 
+      def circuit_breaker
+        @circuit_breaker ||= CircuitBreaker.new
+      end
+
+      def trace_dedupe
+        @trace_dedupe ||= TraceDedupe.new(
+          window_seconds: configuration.dedupe_window_seconds
+        )
+      end
+
+      def memory_watcher
+        @memory_watcher
+      end
+
       def reset_configuration!
         stop
         @configuration = Configuration.new
       end
 
-      def capture(event_name, event_identifier, threshold_ms: nil, metadata: {}, &block)
+      def capture(event_name, event_identifier, threshold_ms: nil, metadata: {}, identifier: nil, &block)
         return yield unless configuration.capture
+
+        return yield if circuit_breaker.disabled?
+
+        if identifier && !trace_dedupe.should_trace?(identifier)
+          return yield
+        end
 
         start
         threshold_ms ||= configuration.default_threshold_ms
@@ -68,10 +94,14 @@ module FlameOn
       end
 
       def stop
+        @memory_watcher&.stop
+        @memory_watcher = nil
         @reporter&.stop
         @error_reporter&.stop
         @reporter = nil
         @error_reporter = nil
+        @circuit_breaker = nil
+        @trace_dedupe = nil
       end
 
       def flush
@@ -134,6 +164,23 @@ module FlameOn
 
       def build_engine
         ProfilePolicy.new(configuration).engine_class.new(configuration)
+      end
+
+      def start_safety_mechanisms
+        # Re-initialize trace_dedupe with current config
+        @trace_dedupe = TraceDedupe.new(
+          window_seconds: configuration.dedupe_window_seconds
+        )
+
+        # Start memory watcher
+        @memory_watcher&.stop
+        @memory_watcher = MemoryWatcher.new(
+          circuit_breaker: circuit_breaker,
+          trace_dedupe: trace_dedupe,
+          check_interval: configuration.memory_check_interval,
+          max_memory_mb: configuration.max_memory_mb
+        )
+        @memory_watcher.start
       end
 
       def restart_reporter_if_running
